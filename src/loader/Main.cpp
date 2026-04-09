@@ -112,13 +112,13 @@ z::Version GetGameVersion(const z::Config& config) {
 
 template <typename OnInvalidConfig, typename OnInvalidFilePath>
 z::Config ReadConfig(
-    const std::wstring_view configFilePath,
+    const fs::path& configPath,
     OnInvalidConfig onInvalidConfig,
     OnInvalidFilePath onInvalidFilePath) {
     z::Config config {};
     std::vector<uint8_t> buffer {};
     const wil::unique_hfile configFile = wil::open_or_create_file(
-        configFilePath.data()
+        configPath / L"loader_config.json";
     );
 
     bool changed = false;
@@ -239,6 +239,16 @@ void StartGame(const z::Config& config) {
         ResumeThread(thread.get());
     }
 }
+
+std::filesystem::path GetExeDirectory() {
+    wchar_t buffer[MAX_PATH];
+    DWORD len = GetModuleFileNameW(nullptr, buffer, MAX_PATH);
+    if (len == 0)
+        throw std::runtime_error("GetModuleFileNameW failed");
+
+    return std::filesystem::path(buffer).parent_path();
+}
+
 } // namespace
 
 int main() try {
@@ -256,7 +266,9 @@ int main() try {
     wil::SetResultLoggingCallback(loggingCallback);
 
     std::println(std::cout, "Reading configuration...");
-    constexpr auto configFilePath = L"loader_config.json";
+    // constexpr auto configFilePath = L"loader_config.json";
+    const auto configFileDir = GetExeDirectory();
+    std::cout << configFilePath << std::endl;
     const auto onInvalidConfig = [](z::Config& config) {
         const z::MessageBoxResult result = z::ShowMessageBox(
             "Loader",
@@ -298,7 +310,7 @@ int main() try {
         }
     };
     const z::Config config = ReadConfig(
-        configFilePath,
+        configFileDir,
         onInvalidConfig,
         onInvalidFilePath
     );
