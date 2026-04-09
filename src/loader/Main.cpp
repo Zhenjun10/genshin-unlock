@@ -117,9 +117,8 @@ z::Config ReadConfig(
     OnInvalidFilePath onInvalidFilePath) {
     z::Config config {};
     std::vector<uint8_t> buffer {};
-    const wil::unique_hfile configFile = wil::open_or_create_file(
-        configPath / L"loader_config.json";
-    );
+    fs::path configFilePath = configPath / L"loader_config.json";
+    const wil::unique_hfile configFile = wil::open_or_create_file(configFilePath.c_str());
 
     bool changed = false;
 
@@ -268,7 +267,6 @@ int main() try {
     std::println(std::cout, "Reading configuration...");
     // constexpr auto configFilePath = L"loader_config.json";
     const auto configFileDir = GetExeDirectory();
-    std::cout << configFilePath << std::endl;
     const auto onInvalidConfig = [](z::Config& config) {
         const z::MessageBoxResult result = z::ShowMessageBox(
             "Loader",
